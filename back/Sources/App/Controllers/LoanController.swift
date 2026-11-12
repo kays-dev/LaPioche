@@ -17,7 +17,9 @@ struct LoanController: RouteCollection {
         guard let member = try await Member.find(dto.memberID, on: req.db) else {
             throw Abort(.notFound, reason: "Member not found")
         }
-
+        
+        try await ensureGameIsNotLoaned(for : game, on: req.db)
+        
         let now = Date()
         let loan = Loan(
             gameID: try game.requireID(),
@@ -25,7 +27,25 @@ struct LoanController: RouteCollection {
             borrowedAt: now,
             dueAt: try Loan.dueDate(from: now)
         )
+        
         try await loan.save(on: req.db)
         return try await loan.toDTO().encodeResponse(status: .created, for: req)
     }
+}
+
+extension LoanController {
+    
+    private func ensureGameIsNotLoaned(for game: Game, on db: any Database) async throws {
+        
+        let requestedLoan = try await Loan.query(on: db)
+            .with(\.$game)
+            .filter( \.$game.$id == game.requireID())
+            .count()
+        
+        guard requestedLoan <= 0 else {
+            throw Abort(.conflict, reason: "Game is already loaned")
+        }
+
+    }
+    
 }
