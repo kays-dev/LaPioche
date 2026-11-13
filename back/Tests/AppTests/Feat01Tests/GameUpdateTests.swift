@@ -2,15 +2,15 @@
 import Testing
 import VaporTesting
 
-@Suite("Feat-01: Update and delete a Game")
-struct Feat01GameTests {
+@Suite("Feat-01: Update a Game")
+struct Feat01GameUpdateTests {
     
     @Test("Successful game update returns 200 OK response")
     func testUpdateGameReturnsOK() async throws {
         try await withApp(configure: configure) { app in
             
             let input = UpdateGameDTO(title: "Blocus", minPlayers: 2, maxPlayers: 10, durationMinutes: 30)
-            let fetchedGame = try await createGameToUpdate(app)
+            let fetchedGame = try await createGameToManage(app)
             
             try await app.testing().test(.PUT, "games/\(fetchedGame.requireID())", beforeRequest: { req in
                 
@@ -36,7 +36,7 @@ struct Feat01GameTests {
         try await withApp(configure: configure) { app in
             
             let input = UpdateGameDTO(title: "", minPlayers: nil, maxPlayers: nil, durationMinutes: nil)
-            let fetchedGame = try await createGameToUpdate(app)
+            let fetchedGame = try await createGameToManage(app)
             
             try await app.testing().test(.PUT, "games/\(fetchedGame.requireID())", beforeRequest: { req in
                 
@@ -55,7 +55,7 @@ struct Feat01GameTests {
         try await withApp(configure: configure) { app in
             
             let input = UpdateGameDTO(title: nil, minPlayers: 100, maxPlayers: nil, durationMinutes: nil)
-            let fetchedGame = try await createGameToUpdate(app)
+            let fetchedGame = try await createGameToManage(app)
             
             try await app.testing().test(.PUT, "games/\(fetchedGame.requireID())", beforeRequest: { req in
                 
@@ -75,7 +75,7 @@ struct Feat01GameTests {
         try await withApp(configure: configure) { app in
             
             let input = UpdateGameDTO(title: nil, minPlayers: 100, maxPlayers: 10, durationMinutes: nil)
-            let fetchedGame = try await createGameToUpdate(app)
+            let fetchedGame = try await createGameToManage(app)
             
             try await app.testing().test(.PUT, "games/\(fetchedGame.requireID())", beforeRequest: { req in
                 
@@ -126,29 +126,6 @@ struct Feat01GameTests {
             })
             
         }
-    }
-    
-}
-
-extension Feat01GameTests {
-    
-    private func createGameToUpdate(
-        _ app: Application,
-        title: String = "Catan",
-        minPlayers: Int = 3,
-        maxPlayers: Int = 4,
-        durationMinutes: Int = 90
-    ) async throws -> Game {
-        
-        let game = Game(
-            title: title,
-            minPlayers: minPlayers,
-            maxPlayers: maxPlayers,
-            durationMinutes: durationMinutes
-        )
-        
-        try await game.save(on: app.db)
-        return game
     }
     
 }

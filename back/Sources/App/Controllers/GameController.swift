@@ -8,6 +8,7 @@ struct GameController: RouteCollection {
         games.post(use: create)
         games.get(":gameID", use: show)
         games.put(":gameID", use: update)
+        games.delete(":gameID", use: delete)
     }
     
     @Sendable
@@ -51,6 +52,7 @@ struct GameController: RouteCollection {
 
 extension GameController {
     
+    //MARK: Feat-01(update and delete a game) methods
     @Sendable
     func update(req: Request) async throws -> Response {
         
@@ -64,6 +66,24 @@ extension GameController {
         
     }
     
+    @Sendable
+    func delete(req: Request) async throws -> HTTPStatus {
+        
+        let game = try await findGame(req)
+        
+        guard game.loans.isEmpty else {
+           throw Abort(.conflict, reason: "Game has at least one loan")
+        }
+        
+        try await game.delete(on: req.db)
+        return .noContent
+    }
+    
+}
+
+extension GameController {
+    
+    //MARK: Feat-01(update and delete a game) helpers
     private func applyUpdateData(from newGame: UpdateGameDTO, to game: Game) async throws -> Game {
         
         if let newTitle = newGame.title {
