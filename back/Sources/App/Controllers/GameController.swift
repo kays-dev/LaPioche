@@ -43,7 +43,7 @@ struct GameController: RouteCollection {
             .filter(\.$id == gameID)
             .with(\.$loans)
             .first()
-                else {
+        else {
             throw Abort(.notFound, reason: "Game not found")
         }
         return game
@@ -56,9 +56,8 @@ extension GameController {
     @Sendable
     func update(req: Request) async throws -> Response {
         
-        try UpdateGameDTO.validate(content: req)
-        let newGame = try req.content.decode(UpdateGameDTO.self)
-        
+        try CreateGameDTO.validate(content: req)
+        let newGame = try req.content.decode(CreateGameDTO.self)
         let updatedGame = try await applyUpdateData(from: newGame, to: findGame(req))
         
         try await updatedGame.save(on: req.db)
@@ -72,7 +71,7 @@ extension GameController {
         let game = try await findGame(req)
         
         guard game.loans.isEmpty else {
-           throw Abort(.conflict, reason: "A game with loans cannot be deleted")
+            throw Abort(.conflict, reason: "A game with loans cannot be deleted")
         }
         
         try await game.delete(on: req.db)
@@ -84,26 +83,15 @@ extension GameController {
 extension GameController {
     
     //MARK: Feat-01(update and delete a game) helpers
-    private func applyUpdateData(from newGame: UpdateGameDTO, to game: Game) async throws -> Game {
+    private func applyUpdateData(from newGame: CreateGameDTO, to game: Game) async throws -> Game {
         
-        if let newTitle = newGame.title {
-            game.title = newTitle
-        }
+        game.title = newGame.title
         
-        let newMinPlayers = newGame.minPlayers ?? game.minPlayers
-        let newMaxPlayers = newGame.maxPlayers ?? game.maxPlayers
+        try newGame.ensureConsistentPlayerCount()
+        game.minPlayers = newGame.minPlayers
+        game.maxPlayers = newGame.maxPlayers
         
-        guard newMinPlayers <= newMaxPlayers else {
-            throw Abort(.badRequest, reason: "minPlayers must not exceed maxPlayers")
-        }
-        
-        game.minPlayers = newMinPlayers
-        game.maxPlayers = newMaxPlayers
-        
-        
-        if let newDurationMinutes = newGame.durationMinutes {
-            game.durationMinutes = newDurationMinutes
-        }
+        game.durationMinutes = newGame.durationMinutes
         
         return game
     }

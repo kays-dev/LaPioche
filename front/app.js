@@ -22,7 +22,11 @@ function el(tag, props = {}, ...children) {
 }
 
 function button(label, onClick, className = "") {
-  return el("button", { type: "button", class: className, onclick: onClick }, label);
+  return el(
+    "button",
+    { type: "button", class: className, onclick: onClick },
+    label,
+  );
 }
 
 function toast(message, isError = false) {
@@ -97,42 +101,85 @@ async function loadGames() {
 
 function gameCard(game) {
   const players =
-    game.minPlayers === game.maxPlayers ? `${game.minPlayers}` : `${game.minPlayers} à ${game.maxPlayers}`;
+    game.minPlayers === game.maxPlayers
+      ? `${game.minPlayers}`
+      : `${game.minPlayers} à ${game.maxPlayers}`;
   const status = game.isAvailable
     ? el("span", { class: "badge ok" }, "Disponible")
     : el("span", { class: "badge busy" }, "Emprunté");
 
   const actions = el("div", { class: "actions" });
   if (game.isAvailable) {
-    actions.append(button("Emprunter", () => openBorrowDialog(game), "primary"));
+    actions.append(
+      button("Emprunter", () => openBorrowDialog(game), "primary"),
+    );
   }
+
+  actions.append(
+    button("Modifier", () => openGameDialog(game), "primary"),
+  );
 
   return el(
     "li",
     { class: "card" },
     el("div", { class: "card-head" }, el("h3", {}, game.title), status),
-    el("p", { class: "meta" }, `${players} joueur·ses · ${game.durationMinutes} min`),
+    el(
+      "p",
+      { class: "meta" },
+      `${players} joueur·ses · ${game.durationMinutes} min`,
+    ),
     actions,
   );
 }
 
 const gameDialog = $("#game-dialog");
 const gameForm = $("#game-form");
+let updatedGameID = null;
 
-$("#add-game").addEventListener("click", () => {
+function openGameDialog(game = null) {
   gameForm.reset();
   showFormError(gameDialog, null);
-  gameDialog.showModal();
-});
 
-bindSubmit(gameDialog, gameForm, (data) =>
-  api.createGame({
+  if (game !== null) {
+    $("#game-dialog-title").textContent = `Modifier « ${game.title} »`;
+
+    updatedGameID = game.id;
+
+    let titleInput = $("#game-title-input");
+    let minPlayersInput = $("#game-min-players-input");
+    let maxPlayersInput = $("#game-max-players-input");
+    let durationMinutesInput = $("#game-duration-minutes-input");
+
+    titleInput.value = game.title;
+    minPlayersInput.value = game.minPlayers;
+    maxPlayersInput.value = game.maxPlayers;
+    durationMinutesInput.value = game.durationMinutes;
+  } else {
+    
+    $("#game-dialog-title").textContent = `Ajouter un jeu`;
+    updatedGameID = null;
+
+  }
+
+  gameDialog.showModal();
+}
+
+$("#add-game").addEventListener("click", () => 
+  openGameDialog()
+);
+
+bindSubmit(gameDialog, gameForm, (data) => {
+  const game = {
     title: data.get("title").trim(),
     minPlayers: Number(data.get("minPlayers")),
     maxPlayers: Number(data.get("maxPlayers")),
     durationMinutes: Number(data.get("durationMinutes")),
-  }),
-);
+  };
+
+  return updatedGameID
+    ? api.updateGame(updatedGameID, game)
+    : api.createGame(game);
+});
 
 // --- Emprunts --------------------------------------------------------------
 
@@ -150,7 +197,9 @@ async function openBorrowDialog(game) {
     borrowedGame = game;
     $("#borrow-dialog-title").textContent = `Emprunter « ${game.title} »`;
     $("select", borrowForm).replaceChildren(
-      ...members.map((member) => el("option", { value: member.id }, `${member.name} (${member.email})`)),
+      ...members.map((member) =>
+        el("option", { value: member.id }, `${member.name} (${member.email})`),
+      ),
     );
     showFormError(borrowDialog, null);
     borrowDialog.showModal();
@@ -159,7 +208,9 @@ async function openBorrowDialog(game) {
 
 bindSubmit(borrowDialog, borrowForm, async (data) => {
   const loan = await api.borrow(borrowedGame.id, data.get("memberID"));
-  toast(`« ${borrowedGame.title} » emprunté, à rendre avant le ${formatDate(loan.dueAt)}.`);
+  toast(
+    `« ${borrowedGame.title} » emprunté, à rendre avant le ${formatDate(loan.dueAt)}.`,
+  );
 });
 
 // --- Adhérent·es -----------------------------------------------------------
@@ -174,7 +225,12 @@ function memberRow(member) {
   return el(
     "li",
     { class: "row" },
-    el("div", { class: "row-main" }, el("p", {}, el("strong", {}, member.name)), el("p", { class: "meta" }, member.email)),
+    el(
+      "div",
+      { class: "row-main" },
+      el("p", {}, el("strong", {}, member.name)),
+      el("p", { class: "meta" }, member.email),
+    ),
   );
 }
 
@@ -188,7 +244,10 @@ $("#add-member").addEventListener("click", () => {
 });
 
 bindSubmit(memberDialog, memberForm, (data) =>
-  api.createMember({ name: data.get("name").trim(), email: data.get("email").trim() }),
+  api.createMember({
+    name: data.get("name").trim(),
+    email: data.get("email").trim(),
+  }),
 );
 
 refresh();

@@ -52,6 +52,45 @@ test("adding a game posts the form then reloads the list", async () => {
   await waitFor(() => !app.$("#game-dialog").open, "la boîte se ferme");
 });
 
+test("updating a game puts the form then reloads the list", async () => {
+  const app = await mountApp({
+    "GET /games": [catan],
+    "PUT /games/g1": [
+      200,
+      { ...catan, title: "Uno", maxPlayers: 10, durationMinutes: 60 },
+    ],
+  });
+
+  await waitFor(() => app.$$("#games-list .card").length === 1);
+  app.click(`Modifier`, cardOf(app, "Catan"));
+  const form = app.$("#game-form");
+  assertEqual(app.$("#game-dialog-title").textContent, "Modifier « Catan »");
+  assertEqual(form.elements.title.value, "Catan");
+  assertEqual(form.elements.minPlayers.value, "3");
+  assertEqual(form.elements.maxPlayers.value, "4");
+  assertEqual(form.elements.durationMinutes.value, "90");
+
+  form.elements.title.value = "  Uno ";
+  form.elements.maxPlayers.value = "10";
+  form.elements.durationMinutes.value = "60";
+  form.requestSubmit();
+
+  await waitFor(
+    () =>
+      app.calls.some(
+        (call) => call.method === "PUT" && call.path === `/games/${catan.id}`,
+      ),
+    "l'appel PUT /games/:gameID",
+  );
+  assertEqual(app.calls.find((call) => call.method === "PUT").body, {
+    title: "Uno",
+    minPlayers: 3,
+    maxPlayers: 10,
+    durationMinutes: 60,
+  });
+  await waitFor(() => !app.$("#game-dialog").open, "la boîte se ferme");
+});
+
 test("a validation error is shown in French and the dialog stays open", async () => {
   const app = await mountApp({
     "GET /games": [],
