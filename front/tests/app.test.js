@@ -91,6 +91,43 @@ test("updating a game puts the form then reloads the list", async () => {
   await waitFor(() => !app.$("#game-dialog").open, "la boîte se ferme");
 });
 
+test("deleting a game opens a confirmation box and makes it disappear from game list", async () => {
+  let deleted = false;
+  const app = await mountApp({
+    "GET /games": () => (deleted ? [dixit] : [dixit, catan]),
+    "DELETE /games/g1": () => {
+      deleted = true;
+      return [204];
+    },
+  });
+
+  await waitFor(() => app.$$("#games-list .card").length === 2);
+
+  app.click(`Supprimer`, cardOf(app, "Catan"));
+    await waitFor(() => app.$("#delete-dialog").open, "la boîte de suppression");
+  assertEqual(
+    app.$("#delete-dialog-title").textContent,
+    "Voulez-vous vraiment supprimer le jeu « Catan » ?",
+  );
+  const form = app.$("#delete-form");
+  form.requestSubmit();
+
+  await waitFor(
+    () =>
+      app.calls.some(
+        (call) =>
+          call.method === "DELETE" && call.path === `/games/${catan.id}`,
+      ),
+    "l'appel DELETE /games/:gameID",
+  );
+  await waitFor(() => app.$$("#games-list .card").length === 1);
+  assertTrue(cardOf(app, "Catan") === undefined, "Catan a disparu");
+  await waitFor(
+    () => app.$("#toasts").textContent.includes("supprimé"),
+    "le message de confirmation",
+  );
+});
+
 test("a validation error is shown in French and the dialog stays open", async () => {
   const app = await mountApp({
     "GET /games": [],

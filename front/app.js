@@ -115,9 +115,9 @@ function gameCard(game) {
     );
   }
 
-  actions.append(
-    button("Modifier", () => openGameDialog(game), "primary"),
-  );
+  actions.append(button("Modifier", () => openGameDialog(game), "primary"));
+
+  actions.append(button("Supprimer", () => openDeleteDialog(game), "danger"));
 
   return el(
     "li",
@@ -251,3 +251,25 @@ bindSubmit(memberDialog, memberForm, (data) =>
 );
 
 refresh();
+
+// --- Suppression -----------------------------------------------------------
+const deleteDialog = $("#delete-dialog");
+const deleteForm = $("#delete-form");
+let deletedGameID = null;
+
+function openDeleteDialog(game) {
+  deleteForm.reset();
+  showFormError(deleteDialog, null);
+
+  $("#delete-dialog-title").textContent =
+    `Voulez-vous vraiment supprimer le jeu « ${game.title} » ?`;
+
+  deletedGameID = game.id;
+  deleteDialog.showModal();
+}
+
+bindSubmit(deleteDialog, deleteForm, async () => {
+  await api.deleteGame(deletedGameID);
+
+  toast(`Le jeu a bien été supprimé.`);
+});

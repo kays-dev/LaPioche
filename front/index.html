@@ -81,6 +81,17 @@
     </form>
   </dialog>
 
+  <dialog id="delete-dialog">
+    <form method="dialog" id="delete-form">
+      <h2 id="delete-dialog-title"></h2>
+      <p class="form-error" role="alert" hidden></p>
+      <div class="actions">
+        <button type="button" data-cancel>Annuler</button>
+        <button type="submit" class="danger">Confirmer</button>
+      </div>
+    </form>
+  </dialog>
+
   <div id="toasts" role="status" aria-live="polite"></div>
 
   <script type="module" src="app.js"></script>
