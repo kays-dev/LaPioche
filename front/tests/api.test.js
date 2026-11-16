@@ -47,6 +47,16 @@ test("borrow sends the game and the member", async () => {
   assertEqual(calls[0].body, { gameID: "g1", memberID: "m1" });
 });
 
+test("updateGame calls PUT /games/:gameID", async () => {
+  const { fetch, calls } = fakeApi({ "PUT /games/1" : [200, { id: "1", title: "Blocus" }]});
+  const newGame = { title: "Blocus", minPlayers: 3, maxPlayers: 4, durationMinutes: 30 };
+  const updated = await withFakeFetch(fetch, () => api.updateGame("1", newGame));
+
+  assertEqual(`${calls[0].method} ${calls[0].path}`, "PUT /games/1");
+  assertEqual(calls[0].body, newGame);
+  assertEqual(updated.title, "Blocus");
+});
+
 // --- erreurs
 
 // Attend qu'une promesse échoue et renvoie l'erreur (échoue si elle réussit).
@@ -74,4 +84,13 @@ test("a game already on loan (409) gives a French message", async () => {
   assertTrue(error instanceof ApiError, "l'erreur devrait être une ApiError");
   assertEqual(error.status, 409);
   assertEqual(error.message, "Ce jeu est déjà emprunté : il faut d'abord le rendre.");
+});
+
+test("an unexisting game (404) gives a French message", async () => {
+  const { fetch } = fakeApi({ "PUT /games/2": [404, { error: true, reason: "Game not found" }] });
+  const newGame = { title: "Blocus", minPlayers: 3, maxPlayers: 4, durationMinutes: 30 };
+  const error = await expectError(withFakeFetch(fetch, () => api.updateGame("2", newGame)));
+  assertTrue(error instanceof ApiError, "l'erreur devrait être une ApiError");
+  assertEqual(error.status, 404);
+  assertEqual(error.message, "Ce jeu n'existe pas ou a déjà été supprimé.");
 });
