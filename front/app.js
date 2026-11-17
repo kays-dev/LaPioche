@@ -117,7 +117,12 @@ function gameCard(game) {
 
   actions.append(button("Modifier", () => openGameDialog(game), "primary"));
 
-  actions.append(button("Supprimer", () => openDeleteDialog(game), "danger"));
+  actions.append(button("Supprimer", () => openDeleteDialog({
+     dialogLabel: `le jeu « ${game.title} »`,
+     call: () => api.deleteGame(game.id),
+     toastLabel: "Le jeu a bien été supprimé·e.",
+  }), 
+    "danger"));
 
   return el(
     "li",
@@ -222,10 +227,16 @@ async function loadMembers() {
 }
 
 function memberRow(member) {
-  
-    const actions = el("div", { class: "actions" });
+  const actions = el("div", { class: "actions" });
 
-    actions.append(button("Modifier", () => openMemberDialog(member), "primary"));
+  actions.append(button("Modifier", () => openMemberDialog(member), "primary"));
+
+  actions.append(button("Supprimer", () => openDeleteDialog({
+     dialogLabel: `l'adhérent·e « ${member.name} »`,
+     call: () => api.deleteMember(member.id),
+     toastLabel: "L'adhérent·e a bien été supprimé·e.",
+  }), 
+    "danger"));
 
   return el(
     "li",
@@ -289,26 +300,27 @@ bindSubmit(memberDialog, memberForm, async (data) => {
   }
 });
 
-refresh();
-
 // --- Suppression -----------------------------------------------------------
 const deleteDialog = $("#delete-dialog");
 const deleteForm = $("#delete-form");
-let deletedGameID = null;
+let onDeletion = null
 
-function openDeleteDialog(game) {
-  deleteForm.reset();
+function openDeleteDialog({ dialogLabel, call, toastLabel }) {
+
+  onDeletion = { call, toastLabel };
   showFormError(deleteDialog, null);
 
   $("#delete-dialog-title").textContent =
-    `Voulez-vous vraiment supprimer le jeu « ${game.title} » ?`;
+    `Voulez-vous vraiment supprimer ${dialogLabel} ?`;
 
-  deletedGameID = game.id;
   deleteDialog.showModal();
+
 }
 
 bindSubmit(deleteDialog, deleteForm, async () => {
-  await api.deleteGame(deletedGameID);
+  await onDeletion.call();
+  toast(onDeletion.toastLabel);
 
-  toast(`Le jeu a bien été supprimé.`);
 });
+
+refresh();

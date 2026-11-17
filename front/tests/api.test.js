@@ -57,7 +57,7 @@ test("updateGame calls PUT /games/:gameID", async () => {
   assertEqual(updated.title, "Blocus");
 });
 
-test("deleteMember calls DELETE /members/:gameID", async () => {
+test("feat-02 : deleteMember calls DELETE /members/:gameID", async () => {
   const { fetch, calls } = fakeApi({ "DELETE /members/1" : [204]});
   await withFakeFetch(fetch, () => api.deleteMember("1"));
 
@@ -102,7 +102,7 @@ test("an unexisting game (404) gives a French message", async () => {
   assertEqual(error.message, "Ce jeu n'existe pas ou a déjà été supprimé.");
 });
 
-test("a taken member email (409) gives a French message", async () => {
+test("feat-02 : a taken member email (409) gives a French message", async () => {
   const { fetch } = fakeApi({ "PUT /members/1": [409, { error: true, reason: "A member with this email already exists" }] });
   const newMember = { name: "Camille", email: "camille@example.com" };
   const error = await expectError(withFakeFetch(fetch, () => api.updateMember("1", newMember)));

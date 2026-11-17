@@ -240,3 +240,41 @@ test("feat-02 : updating a member puts the form then reloads the list", async ()
   });
   await waitFor(() => !app.$("#member-dialog").open, "la boîte se ferme");
 });
+
+test("feat-02 : deleting a member opens a confirmation box and makes it disappear from member list", async () => {
+  let deleted = false;
+  const app = await mountApp({
+    "GET /members": () => (deleted ? [] : [camille]),
+    "DELETE /members/m1": () => {
+      deleted = true;
+      return [204];
+    }},
+    { hash: "#members" }
+  );
+
+  await waitFor(() => app.$$("#members-list .row").length === 1);
+
+  app.click(`Supprimer`, rowOf(app, "Camille"));
+    await waitFor(() => app.$("#delete-dialog").open, "la boîte de suppression");
+  assertEqual(
+    app.$("#delete-dialog-title").textContent,
+    "Voulez-vous vraiment supprimer l'adhérent·e « Camille » ?",
+  );
+  const form = app.$("#delete-form");
+  form.requestSubmit();
+
+  await waitFor(
+    () =>
+      app.calls.some(
+        (call) =>
+          call.method === "DELETE" && call.path === `/members/${camille.id}`,
+      ),
+    "l'appel DELETE /members/:memberID",
+  );
+  await waitFor(() => app.$$("#members-list .row").length === 0);
+  assertTrue(rowOf(app, "Camille") === undefined, "Camille a disparu");
+  await waitFor(
+    () => app.$("#toasts").textContent.includes("supprimé"),
+    "le message de confirmation",
+  );
+});
