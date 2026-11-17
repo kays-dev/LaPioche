@@ -22,7 +22,7 @@ func createGameToManage(
     return game
 }
 
-func createMemberToManageGame(
+func createMemberToManage(
     _ app: Application,
     name: String = "Camille",
     email: String = "camille@example.com"
