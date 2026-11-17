@@ -36,3 +36,19 @@ func createMemberToManage(
     try await member.save(on: app.db)
     return member
 }
+
+func borrow(
+    _ app: Application,
+    returned: Bool = false,
+) async throws -> Loan {
+    
+    let game = try await createGameToManage(app)
+    let member = try await createMemberToManage(app)
+    
+    let loan = Loan(gameID: try game.requireID(), memberID: try member.requireID(), borrowedAt: .now, dueAt: .now.addingTimeInterval(14 * 24 * 3600))
+    
+    loan.returnedAt = returned ? .now : nil
+    
+    try await loan.save(on: app.db)
+    return loan
+}
