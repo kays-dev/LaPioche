@@ -55,7 +55,7 @@
 
   <dialog id="member-dialog">
     <form method="dialog" id="member-form" novalidate>
-      <h2>Ajouter un·e adhérent·e</h2>
+      <h2 id="member-dialog-title" ></h2>
       <label>Nom <input name="name" required></label>
       <label>Adresse e-mail <input type="email" name="email" required></label>
       <p class="form-error" role="alert" hidden></p>
@@ -83,7 +83,7 @@
 
   <dialog id="delete-dialog">
     <form method="dialog" id="delete-form">
-      <h2 id="delete-dialog-title"></h2>
+      <h3 id="delete-dialog-title"></h3>
       <p class="form-error" role="alert" hidden></p>
       <div class="actions">
         <button type="button" data-cancel>Annuler</button>

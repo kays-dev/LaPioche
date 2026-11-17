@@ -27,7 +27,7 @@ struct Feat01GameDeleteTests {
             
             let fetchedGame = try await createGameToManage(app)
             
-            let member = try await createMemberToManageGame(app)
+            let member = try await createMemberToManage(app)
             
             try await insertLoan(app, gameID: fetchedGame.requireID(), memberID: member.requireID(), borrowedAt: .now, dueAt: .now.addingTimeInterval(14 * 24 * 3600))
             
@@ -45,7 +45,7 @@ struct Feat01GameDeleteTests {
             
             let fetchedGame = try await createGameToManage(app)
             
-            let member = try await createMemberToManageGame(app)
+            let member = try await createMemberToManage(app)
             
             try await insertLoan(app, gameID: fetchedGame.requireID(), memberID: member.requireID(), borrowedAt: .now, dueAt: .now.addingTimeInterval(14 * 24 * 3600), returnedAt: .now)
             

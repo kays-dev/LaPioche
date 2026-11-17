@@ -57,6 +57,13 @@ test("updateGame calls PUT /games/:gameID", async () => {
   assertEqual(updated.title, "Blocus");
 });
 
+test("feat-02 : deleteMember calls DELETE /members/:gameID", async () => {
+  const { fetch, calls } = fakeApi({ "DELETE /members/1" : [204]});
+  await withFakeFetch(fetch, () => api.deleteMember("1"));
+
+  assertEqual(`${calls[0].method} ${calls[0].path}`, "DELETE /members/1");
+});
+
 // --- erreurs
 
 // Attend qu'une promesse échoue et renvoie l'erreur (échoue si elle réussit).
@@ -93,4 +100,13 @@ test("an unexisting game (404) gives a French message", async () => {
   assertTrue(error instanceof ApiError, "l'erreur devrait être une ApiError");
   assertEqual(error.status, 404);
   assertEqual(error.message, "Ce jeu n'existe pas ou a déjà été supprimé.");
+});
+
+test("feat-02 : a taken member email (409) gives a French message", async () => {
+  const { fetch } = fakeApi({ "PUT /members/1": [409, { error: true, reason: "A member with this email already exists" }] });
+  const newMember = { name: "Camille", email: "camille@example.com" };
+  const error = await expectError(withFakeFetch(fetch, () => api.updateMember("1", newMember)));
+  assertTrue(error instanceof ApiError, "l'erreur devrait être une ApiError");
+  assertEqual(error.status, 409);
+  assertEqual(error.message, "Un·e autre adhérent·e utilise déjà cette adresse e-mail.");
 });
