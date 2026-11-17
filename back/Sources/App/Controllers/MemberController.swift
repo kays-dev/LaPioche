@@ -8,6 +8,7 @@ struct MemberController: RouteCollection {
         members.post(use: create)
         members.get(":memberID", use: show)
         members.put(":memberID", use: update)
+        members.delete(":memberID", use: delete)
     }
 
     @Sendable
@@ -51,6 +52,19 @@ extension MemberController {
         try await updatedMember.save(on: req.db)
         return try await updatedMember.toDTO().encodeResponse(status: .ok, for: req)
     
+    }
+    
+    @Sendable
+    func delete(req: Request) async throws -> HTTPStatus {
+        
+        let member = try await findMember(req)
+        
+        guard member.loans.isEmpty else {
+            throw Abort(.conflict, reason: "A member with loans cannot be deleted")
+        }
+        
+        try await member.delete(on: req.db)
+        return .noContent
     }
 }
 

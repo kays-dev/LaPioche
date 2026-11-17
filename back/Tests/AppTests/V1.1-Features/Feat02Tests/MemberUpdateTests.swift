@@ -89,7 +89,7 @@ struct Feat02MemberUpdateTests {
     }
     
     @Test("Member to update doesn't exist in database returns 404 Not Found")
-    func testUpdateMemberWithUnknownGameReturnsNotFound() async throws {
+    func testUpdateMemberWithUnknownMemberReturnsNotFound() async throws {
         try await withApp(configure: configure) { app in
             
             let input = CreateMemberDTO(name: "Krys", email: "krys@lapioche.com")
