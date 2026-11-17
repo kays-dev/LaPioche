@@ -39,12 +39,12 @@
   <dialog id="game-dialog">
     <form method="dialog" id="game-form" novalidate>
       <h2 id="game-dialog-title">Ajouter un jeu</h2>
-      <label>Titre <input name="title" id="game-title-input" required></label>
+      <label>Titre <input name="title" required></label>
       <div class="pair">
-        <label>Joueur·ses min <input type="number" name="minPlayers" min="1" step="1" id="game-min-players-input" required></label>
-        <label>Joueur·ses max <input type="number" name="maxPlayers" min="1" step="1" id="game-max-players-input"  required></label>
+        <label>Joueur·ses min <input type="number" name="minPlayers" min="1" step="1" required></label>
+        <label>Joueur·ses max <input type="number" name="maxPlayers" min="1" step="1" required></label>
       </div>
-      <label>Durée (minutes) <input type="number" name="durationMinutes" min="1" step="1" id="game-duration-minutes-input" required></label>
+      <label>Durée (minutes) <input type="number" name="durationMinutes" min="1" step="1" required></label>
       <p class="form-error" role="alert" hidden></p>
       <div class="actions">
         <button type="button" data-cancel>Annuler</button>

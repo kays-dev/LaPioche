@@ -54,7 +54,7 @@ test("adding a game posts the form then reloads the list", async () => {
   await waitFor(() => !app.$("#game-dialog").open, "la boîte se ferme");
 });
 
-test("updating a game puts the form then reloads the list", async () => {
+test("feat-01 : updating a game puts the form then reloads the list", async () => {
   const app = await mountApp({
     "GET /games": [catan],
     "PUT /games/g1": [
@@ -93,7 +93,7 @@ test("updating a game puts the form then reloads the list", async () => {
   await waitFor(() => !app.$("#game-dialog").open, "la boîte se ferme");
 });
 
-test("deleting a game opens a confirmation box and makes it disappear from game list", async () => {
+test("feat-01 : deleting a game opens a confirmation box and makes it disappear from game list", async () => {
   let deleted = false;
   const app = await mountApp({
     "GET /games": () => (deleted ? [dixit] : [dixit, catan]),
