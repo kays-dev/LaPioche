@@ -7,6 +7,8 @@ const camille = { id: "m1", name: "Camille", email: "camille@example.com" };
 
 const cardOf = (app, title) => app.$$("#games-list .card").find((card) => card.querySelector("h3").textContent === title);
 
+const rowOf = (app, name) => app.$$("#member-list .row").find((row) => row.querySelector("strong").textContent === name);
+
 // --- Jeux
 
 test("games list shows one card per game with its availability", async () => {
@@ -203,4 +205,38 @@ test("an email already in use is shown in French", async () => {
   app.$("#member-form").requestSubmit();
   await waitFor(() => !app.$("#member-dialog .form-error").hidden, "le message d'erreur");
   assertIncludes(app.$("#member-dialog .form-error").textContent, "utilise déjà cette adresse e-mail");
+});
+
+test("feat-02 : updating a member puts the form then reloads the list", async () => {
+  const app = await mountApp({
+    "GET /members": [camille],
+    "PUT /members/m1": [
+      200,
+      { ...camille, name: "Camila" },
+    ]},
+    { hash: "#members" }
+);
+
+  await waitFor(() => app.$$("#members-list .row").length === 1);
+  app.click(`Modifier`, rowOf(app, "Camille"));
+  const form = app.$("#member-form");
+  assertEqual(app.$("#member-dialog-title").textContent, "Modifier l'adhérent·e « Camille »");
+  assertEqual(form.elements.name.value, "Camille");
+  assertEqual(form.elements.email.value, "camille@example.com");
+
+  form.elements.name.value = "  Camila ";
+  form.requestSubmit();
+
+  await waitFor(
+    () =>
+      app.calls.some(
+        (call) => call.method === "PUT" && call.path === `/members/${camille.id}`,
+      ),
+    "l'appel PUT /members/:memberID",
+  );
+  assertEqual(app.calls.find((call) => call.method === "PUT").body, {
+    name: "Camila",
+    email: "camille@example.com",
+  });
+  await waitFor(() => !app.$("#member-dialog").open, "la boîte se ferme");
 });
