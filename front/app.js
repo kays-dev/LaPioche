@@ -145,15 +145,11 @@ function openGameDialog(game = null) {
 
     updatedGameID = game.id;
 
-    let titleInput = $("#game-title-input");
-    let minPlayersInput = $("#game-min-players-input");
-    let maxPlayersInput = $("#game-max-players-input");
-    let durationMinutesInput = $("#game-duration-minutes-input");
+    gameForm.elements.title.value = game.title;
+    gameForm.elements.minPlayers.value = game.minPlayers;
+    gameForm.elements.maxPlayers.value = game.maxPlayers;
+    gameForm.elements.durationMinutes.value = game.durationMinutes;
 
-    titleInput.value = game.title;
-    minPlayersInput.value = game.minPlayers;
-    maxPlayersInput.value = game.maxPlayers;
-    durationMinutesInput.value = game.durationMinutes;
   } else {
     
     $("#game-dialog-title").textContent = `Ajouter un jeu`;
@@ -168,7 +164,7 @@ $("#add-game").addEventListener("click", () =>
   openGameDialog()
 );
 
-bindSubmit(gameDialog, gameForm, (data) => {
+bindSubmit(gameDialog, gameForm, async (data) => {
   const game = {
     title: data.get("title").trim(),
     minPlayers: Number(data.get("minPlayers")),
@@ -176,9 +172,18 @@ bindSubmit(gameDialog, gameForm, (data) => {
     durationMinutes: Number(data.get("durationMinutes")),
   };
 
-  return updatedGameID
-    ? api.updateGame(updatedGameID, game)
-    : api.createGame(game);
+  if (updatedGameID) {
+
+    await api.updateGame(updatedGameID, game);
+    toast(`Le jeu « ${game.title} » a bien été modifié·e.`);
+
+  } else {
+
+    await api.createGame(game);
+    toast(`Le jeu « ${game.title} » a bien été créé·e.`);
+
+  }
+
 });
 
 // --- Emprunts --------------------------------------------------------------
