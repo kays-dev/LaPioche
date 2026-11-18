@@ -57,13 +57,19 @@ test("feat-01 : updateGame calls PUT /games/:gameID", async () => {
   assertEqual(updated.title, "Blocus");
 });
 
-test("feat-02 : deleteMember calls DELETE /members/:gameID", async () => {
+test("feat-02 : deleteMember calls DELETE /members/:memberID", async () => {
   const { fetch, calls } = fakeApi({ "DELETE /members/1" : [204]});
   await withFakeFetch(fetch, () => api.deleteMember("1"));
 
   assertEqual(`${calls[0].method} ${calls[0].path}`, "DELETE /members/1");
 });
 
+test("feat-04 : listMemberLoans calls GET /members/:memberID/loans", async () => {
+  const { fetch, calls } = fakeApi({ "GET /members/m1/loans" : [204]});
+  await withFakeFetch(fetch, () => api.listMemberLoans("m1"));
+
+  assertEqual(`${calls[0].method} ${calls[0].path}`, "GET /members/m1/loans");
+});
 // --- erreurs
 
 // Attend qu'une promesse échoue et renvoie l'erreur (échoue si elle réussit).
