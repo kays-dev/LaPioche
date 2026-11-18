@@ -6,6 +6,7 @@ struct LoanController: RouteCollection {
         let loans = routes.grouped("loans")
         loans.post(use: create)
         loans.post(":loanID", "return", use: returnGame)
+        loans.get("overdue", use: showOverdueLoans)
     }
 
     @Sendable
@@ -55,6 +56,19 @@ extension LoanController {
         
         try await loan.save(on: req.db)
         return try await loan.toDTO().encodeResponse(status: .ok, for: req)
+        
+    }
+    
+    //MARK: Feat-05(list overdue game) methods
+    @Sendable
+    func showOverdueLoans(req : Request) async throws -> [LoanDTO] {
+        
+        let loans = try await Loan.query(on: req.db)
+            .filter(\.$returnedAt == nil)
+            .filter(\.$dueAt < Date())
+            .all()
+        
+        return loans.map { $0.toDTO() }
         
     }
 }
