@@ -12,6 +12,7 @@
     <nav aria-label="Sections">
       <a href="#games" data-tab="games">Jeux</a>
       <a href="#members" data-tab="members">Adhérent·es</a>
+      <a href="#overdue" data-tab="overdue">Emprunts en retard <span id="overdue-count" class="badge late" hidden></span></a>
     </nav>
     <a class="docs-link" id="docs-link" href="http://localhost:8081/">Documentation API</a>
   </header>
@@ -34,6 +35,14 @@
       <p id="members-empty" class="empty" hidden>Aucun·e adhérent·e pour le moment. Cliquez sur « Ajouter un·e adhérent·e » pour créer le premier ou la première.</p>
       <ul id="members-list" class="rows"></ul>
     </section>
+
+        <section id="overdue" class="tab" hidden>
+          <div class="section-head">
+            <h2>Emprunts en retard</h2>
+          </div>
+          <p id="overdue-empty" class="empty" hidden>Aucun emprunt en retard pour le moment.</p>
+          <ul id="overdue-list" class="rows"></ul>
+        </section>
   </main>
 
   <dialog id="game-dialog">
