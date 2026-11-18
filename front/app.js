@@ -73,7 +73,7 @@ function bindSubmit(dialog, form, handler) {
 
 // --- Onglets ---------------------------------------------------------------
 
-const tabs = ["games", "members"];
+const tabs = ["games", "members", "overdue"];
 
 function currentTab() {
   const name = location.hash.slice(1);
@@ -86,7 +86,15 @@ async function refresh() {
     $(`#${name}`).hidden = name !== tab;
     $(`[data-tab="${name}"]`).toggleAttribute("aria-current", name === tab);
   }
-  await run(tab === "games" ? loadGames : loadMembers);
+  await run(() =>
+    tab === "games"
+      ? loadGames()
+      : tab === "members"
+        ? loadMembers()
+        : loadOverdue(),
+  );
+
+  await updateOverdueCount();
 }
 
 window.addEventListener("hashchange", refresh);
@@ -196,6 +204,63 @@ bindSubmit(gameDialog, gameForm, async (data) => {
 });
 
 // --- Emprunts --------------------------------------------------------------
+
+async function loadOverdue() {
+  const [loans, games, members] = await Promise.all([
+    api.listOverdueLoans(),
+    api.listGames(),
+    api.listMembers(),
+  ]);
+
+  const gameTitles = new Map(games.map((game) => [game.id, game.title]));
+
+  const memberNames = new Map(
+    members.map((member) => [member.id, member.name]),
+  );
+
+  $("#overdue-empty").hidden = loans.length > 0;
+  $("#overdue-list").replaceChildren(
+    ...loans.map((loan) =>
+      overdueRow(
+        loan,
+        gameTitles.get(loan.gameID),
+        memberNames.get(loan.memberID),
+      ),
+    ),
+  );
+}
+async function updateOverdueCount() {
+  try {
+    const loans = await api.listOverdueLoans();
+    $("#overdue-count").textContent = loans.length;
+    $("#overdue-count").hidden = loans.length === 0;
+  } catch {
+    $("#overdue-count").hidden = true;
+  }
+}
+
+function daysLate(loan) {
+  return Math.max(1, Math.floor((Date.now() - new Date(loan.dueAt)) / (24 * 3600 * 1000)));
+}
+
+function overdueRow(loan, gameTitle, memberName) {
+  const days = daysLate(loan);
+  return el(
+    "li",
+    { class: "row late" },
+    el(
+      "div",
+      { class: "row-main" },
+      el("p", {}, el("strong", {}, gameTitle), ` · ${memberName}`),
+      el("p", { class: "meta" }, `À rendre le ${formatDate(loan.dueAt)}`),
+    ),
+    el(
+      "span",
+      { class: "badge late" },
+      `En retard de ${days} jour${days > 1 ? "s" : ""}`,
+    ),
+  );
+}
 
 const borrowDialog = $("#borrow-dialog");
 const borrowForm = $("#borrow-form");

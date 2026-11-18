@@ -69,6 +69,7 @@ extension MemberController {
     }
     
     //MARK: Feat-04(read member loans) methods
+    @Sendable
     func showLoans(req: Request) async throws -> [LoanDTO] {
         
         return try await findMember(req).loans.map { $0.toDTO() }

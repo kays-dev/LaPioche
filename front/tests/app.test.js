@@ -219,6 +219,54 @@ test("borrowing without any member explains that one must be added first", async
   assertTrue(!app.$("#borrow-dialog").open, "la boîte d'emprunt ne doit pas s'ouvrir");
 });
 
+test("feat-05 : overdue tab lists late loans with game, member, due date and days late", async () => {
+  const lateLoan = {
+    id: "l1",
+    gameID: "g1",
+    memberID: "m1",
+    borrowedAt: new Date(Date.now() - 20 * (24 * 3600 * 1000)).toISOString(),
+    dueAt: new Date(Date.now() + (-20 + 14) * (24 * 3600 * 1000)).toISOString(),
+  };
+
+  const daysLate = Math.ceil(
+    (Date.now() - new Date(lateLoan.dueAt)) / (24 * 3600 * 1000),
+  );
+
+  const app = await mountApp(
+    {
+      "GET /loans/overdue": [lateLoan],
+      "GET /games": [catan],
+      "GET /members": [camille],
+    },
+    { hash: "#overdue" },
+  );
+
+  await waitFor(
+    () => app.$$("#overdue-list .row").length === 1,
+    "une ligne en retard",
+  );
+  const text = app.$("#overdue-list .row").textContent;
+  assertIncludes(text, "Catan");
+  assertIncludes(text, "Camille");
+  assertIncludes(text, `En retard de ${daysLate} jours`);
+  assertTrue(app.$("#overdue-empty").hidden, "le message vide est caché");
+  await waitFor(
+    () => app.$("#overdue-count").textContent === "1",
+    "l'indicateur affiche 1",
+  );
+});
+
+test("feat-05 : with no late loan, a message says so", async () => {
+  const app = await mountApp({
+    "GET /loans/overdue": [],
+    "GET /games": [],
+    "GET /members": [],
+  }, { hash: "#overdue" });
+
+  await waitFor(() => !app.$("#overdue-empty").hidden, "le message sans retard");
+  assertEqual(app.$$("#overdue-list .row").length, 0);
+  assertTrue(app.$("#overdue-count").hidden, "l'indicateur est caché");
+});
 // --- Adhérent·es
 
 test("members tab lists the members", async () => {

@@ -78,6 +78,12 @@ test("feat-04 : listMemberLoans calls GET /members/:memberID/loans", async () =>
   assertEqual(`${calls[0].method} ${calls[0].path}`, "GET /members/m1/loans");
 });
 
+test("feat-05 : listOverdueLoans calls GET /loans/overdue", async () => {
+  const { fetch, calls } = fakeApi({ "GET /loans/overdue" : []});
+  await withFakeFetch(fetch, () => api.listOverdueLoans());
+
+  assertEqual(`${calls[0].method} ${calls[0].path}`, "GET /loans/overdue");
+});
 // --- erreurs
 
 // Attend qu'une promesse échoue et renvoie l'erreur (échoue si elle réussit).
