@@ -113,6 +113,10 @@ function gameCard(game) {
     actions.append(
       button("Emprunter", () => openBorrowDialog(game), "primary"),
     );
+  } else {
+        actions.append(
+      button("Rendre", () => returnGame(game), "primary"),
+    );
   }
 
   actions.append(button("Modifier", () => openGameDialog(game), "primary"));
@@ -214,6 +218,30 @@ async function openBorrowDialog(game) {
     showFormError(borrowDialog, null);
     borrowDialog.showModal();
   });
+}
+
+async function returnGame (game) {
+  await run(async () => {
+    const members = await api.listMembers();
+
+    const membersLoans = await Promise.all(members.map((member) => api.listMemberLoans(member.id)));
+
+    const gameLoan = membersLoans.flat().find((loan) => loan.gameID === game.id && !loan.returnedAt);
+
+    //Peut arriver si l'affichage n'est pas à jour
+    if (!gameLoan){
+      toast(`Aucun emprunt en cours n'a été trouvé pour le jeu « ${game.title} ».`, true);
+
+      await refresh();
+      return;
+    }
+    
+    await api.returnLoan(gameLoan.id);
+
+    toast(`Le jeu « ${game.title} » a bien été rendu.`);
+
+    await refresh();
+  })
 }
 
 bindSubmit(borrowDialog, borrowForm, async (data) => {

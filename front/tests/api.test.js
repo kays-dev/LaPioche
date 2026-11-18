@@ -64,12 +64,20 @@ test("feat-02 : deleteMember calls DELETE /members/:memberID", async () => {
   assertEqual(`${calls[0].method} ${calls[0].path}`, "DELETE /members/1");
 });
 
+test("feat-03 : returnLoan calls POST /loans/:loanID/return", async () => {
+  const { fetch, calls } = fakeApi({ "POST /loans/l1/return" : [200, { id: "l1" }]});
+  await withFakeFetch(fetch, () => api.returnLoan("l1"));
+
+  assertEqual(`${calls[0].method} ${calls[0].path}`, "POST /loans/l1/return");
+});
+
 test("feat-04 : listMemberLoans calls GET /members/:memberID/loans", async () => {
   const { fetch, calls } = fakeApi({ "GET /members/m1/loans" : [204]});
   await withFakeFetch(fetch, () => api.listMemberLoans("m1"));
 
   assertEqual(`${calls[0].method} ${calls[0].path}`, "GET /members/m1/loans");
 });
+
 // --- erreurs
 
 // Attend qu'une promesse échoue et renvoie l'erreur (échoue si elle réussit).
@@ -115,4 +123,13 @@ test("feat-02 : a taken member email (409) gives a French message", async () => 
   assertTrue(error instanceof ApiError, "l'erreur devrait être une ApiError");
   assertEqual(error.status, 409);
   assertEqual(error.message, "Un·e autre adhérent·e utilise déjà cette adresse e-mail.");
+});
+
+test("feat-03 : an already returned loan (409) gives a French message", async () => {
+  const { fetch } = fakeApi({ "POST /loans/l1/return": [409, { error: true, reason: "Loan is already returned" }] });
+
+  const error = await expectError(withFakeFetch(fetch, () => api.returnLoan("l1")));
+  assertTrue(error instanceof ApiError, "l'erreur devrait être une ApiError");
+  assertEqual(error.status, 409);
+  assertEqual(error.message, "Cet emprunt a déjà été rendu.");
 });

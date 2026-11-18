@@ -143,6 +143,57 @@ test("a validation error is shown in French and the dialog stays open", async ()
   assertTrue(app.$("#game-dialog").open, "la boîte devrait rester ouverte");
 });
 
+test("feat-03 : returning a game changes game availability with a confirmation message and borrow is possible again", async () => {
+  let returned = false;
+  const activeLoan = {
+    id: "l1",
+    gameID: "g2",
+    memberID: "m1",
+    borrowedAt: new Date().toISOString(),
+    dueAt: new Date().toISOString(),
+  };
+
+  const app = await mountApp({
+    "GET /games": () => [returned ? { ...dixit, isAvailable: true } : dixit],
+    "GET /members": [camille],
+    "GET /members/m1/loans": [activeLoan],
+    "POST /loans/l1/return": () => {
+      returned = true;
+      return [200, { ...activeLoan, returnedAt: new Date().toISOString() }];
+    },
+  });
+
+  await waitFor(() => app.$$("#games-list .card").length === 1);
+  assertIncludes(cardOf(app, "Dixit").textContent, "Emprunté");
+
+  app.click(`Rendre`, cardOf(app, "Dixit"));
+
+  await waitFor(
+    () =>
+      app.calls.some(
+        (call) =>
+          call.method === "POST" &&
+          call.path === `/loans/${activeLoan.id}/return`,
+      ),
+    "l'appel POST /loans/:loanID/return",
+  );
+
+  await waitFor(
+    () => cardOf(app, "Dixit")?.textContent.includes("Disponible"),
+    "le jeu redevient disponible",
+  );
+  await waitFor(
+    () => app.$("#toasts").textContent.includes("rendu"),
+    "le message de confirmation",
+  );
+
+  const buttons = [...cardOf(app, "Dixit").querySelectorAll("button")].map(
+    (button) => button.textContent,
+  );
+  assertTrue(buttons.includes("Emprunter"), "Emprunter est de nouveau proposé");
+  assertTrue(!buttons.includes("Rendre"), "Rendre n'est plus proposé");
+});
+
 // --- Emprunts
 
 test("borrowing a game sends the game and the chosen member", async () => {
