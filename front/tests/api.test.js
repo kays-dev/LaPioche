@@ -77,6 +77,7 @@ test("feat-04 : listMemberLoans calls GET /members/:memberID/loans", async () =>
 
   assertEqual(`${calls[0].method} ${calls[0].path}`, "GET /members/m1/loans");
 });
+
 // --- erreurs
 
 // Attend qu'une promesse échoue et renvoie l'erreur (échoue si elle réussit).
