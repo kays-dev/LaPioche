@@ -109,9 +109,16 @@ async function request(method, path, body) {
 export const api = {
   listGames: () => request("GET", "/games"),
   createGame: (game) => request("POST", "/games", game),
+  updateGame: (gameID, newGame) => request("PUT", `/games/${gameID}`, newGame),
+  deleteGame: (gameID) => request("DELETE", `/games/${gameID}`),
 
   listMembers: () => request("GET", "/members"),
   createMember: (member) => request("POST", "/members", member),
+  updateMember: (memberID, newMember) => request("PUT", `/members/${memberID}`, newMember),
+  deleteMember: (memberID) => request("DELETE", `/members/${memberID}`),
+  listMemberLoans: (memberID) => request("GET", `/members/${memberID}/loans`),
 
   borrow: (gameID, memberID) => request("POST", "/loans", { gameID, memberID }),
+  returnLoan: (loanID) => request("POST", `/loans/${loanID}/return`),
+  listOverdueLoans: () => request("GET", "/loans/overdue")
 };

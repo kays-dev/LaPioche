@@ -5,6 +5,8 @@ struct LoanController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let loans = routes.grouped("loans")
         loans.post(use: create)
+        loans.post(":loanID", "return", use: returnGame)
+        loans.get("overdue", use: showOverdueLoans)
     }
 
     @Sendable
@@ -35,15 +37,53 @@ struct LoanController: RouteCollection {
 
 extension LoanController {
     
+    //MARK: Feat-03(return a game) methods
+    @Sendable
+    func returnGame(req: Request) async throws -> Response {
+        
+        guard let id = req.parameters.get("loanID", as: UUID.self) else {
+            throw Abort(.badRequest, reason: "Invalid loan id")
+        }
+        guard let loan = try await Loan.find(id, on: req.db) else {
+            throw Abort(.notFound, reason: "Loan not found")
+        }
+        
+        guard loan.returnedAt == nil else {
+            throw Abort(.conflict, reason: "Loan is already returned")
+        }
+        
+        loan.returnedAt = Date()
+        
+        try await loan.save(on: req.db)
+        return try await loan.toDTO().encodeResponse(status: .ok, for: req)
+        
+    }
+    
+    //MARK: Feat-05(list overdue game) methods
+    @Sendable
+    func showOverdueLoans(req : Request) async throws -> [LoanDTO] {
+        
+        let loans = try await Loan.query(on: req.db)
+            .filter(\.$returnedAt == nil)
+            .filter(\.$dueAt < Date())
+            .all()
+        
+        return loans.map { $0.toDTO() }
+        
+    }
+}
+
+extension LoanController {
+    
     private func ensureGameIsNotLoaned(for game: Game, on db: any Database) async throws {
         
         let requestedLoan = try await Loan.query(on: db)
-            .with(\.$game)
             .filter( \.$game.$id == game.requireID())
+            .filter(\.$returnedAt == nil)
             .count()
         
         guard requestedLoan <= 0 else {
-            throw Abort(.conflict, reason: "Game is already loaned")
+            throw Abort(.conflict, reason: "Game is already on loan")
         }
 
     }
