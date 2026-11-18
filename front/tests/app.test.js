@@ -278,3 +278,113 @@ test("feat-02 : deleting a member opens a confirmation box and makes it disappea
     "le message de confirmation",
   );
 });
+
+test("feat-04 : getting a member's loans opens a dialog with its loans list", async () => {
+  const day = 24 * 3600 * 1000;
+  const isoDaysFromNow = (days) =>
+    new Date(Date.now() + days * day).toISOString();
+
+  let loan1 = {
+    id: "l1",
+    gameID: "g1",
+    memberID: "m1",
+    borrowedAt: isoDaysFromNow(-30),
+    dueAt: isoDaysFromNow(-30 + 14),
+    returnedAt: isoDaysFromNow(-30 + 8),
+  };
+
+  let loan2 = {
+    id: "l2",
+    gameID: "g2",
+    memberID: "m1",
+    borrowedAt: isoDaysFromNow(-20),
+    dueAt: isoDaysFromNow(-20 + 14),
+  };
+
+  let loan3 = {
+    id: "l3",
+    gameID: "g1",
+    memberID: "m1",
+    borrowedAt: isoDaysFromNow(-1),
+    dueAt: isoDaysFromNow(-1 + 14),
+  };
+
+  const app = await mountApp(
+    {
+      "GET /members": [camille],
+      "GET /games": [catan, dixit],
+      "GET /members/m1/loans": [loan1, loan2, loan3],
+    },
+    { hash: "#members" },
+  );
+
+  await waitFor(() => app.$$("#members-list .row").length === 1);
+  app.click(`Emprunts`, rowOf(app, "Camille"));
+
+  await waitFor(
+    () =>
+      app.calls.some(
+        (call) =>
+          call.method === "GET" && call.path === `/members/${camille.id}/loans`,
+      ),
+    "l'appel GET /members/:memberID/loans",
+  );
+
+  await waitFor(
+    () => app.$("#member-loans-dialog").open,
+    "le dialogue des emprunts s'ouvre",
+  );
+
+  const list = app.$("#member-loans-list");
+  const rows = app.$$("#member-loans-list .row");
+  const rowStatus = (badge) => rows.find((row) => row.querySelector(badge));
+
+  assertEqual(rows.length, 3);
+  assertTrue(app.$("#member-loans-empty").hidden, "le message est caché lorsque la liste n'est pas vide");
+
+  assertIncludes(list.textContent, "Catan");
+  assertIncludes(list.textContent, "Dixit");
+
+  assertIncludes(rowStatus(".busy").textContent, "Catan");
+  assertIncludes(rowStatus(".busy").textContent, "En cours");
+
+  assertIncludes(rowStatus(".late").textContent, "Dixit");
+  assertIncludes(rowStatus(".late").textContent, "En retard");
+
+  assertIncludes(rowStatus(".ok").textContent, "Catan");
+  assertIncludes(rowStatus(".ok").textContent, "Rendu");
+});
+
+test("feat-04 : getting a member's loans opens a dialog with its empty loans list", async () => {
+  const app = await mountApp(
+    {
+      "GET /members": [camille],
+      "GET /games": [],
+      "GET /members/m1/loans": [],
+    },
+    { hash: "#members" },
+  );
+
+  await waitFor(() => app.$$("#members-list .row").length === 1);
+  app.click(`Emprunts`, rowOf(app, "Camille"));
+
+  await waitFor(
+    () =>
+      app.calls.some(
+        (call) =>
+          call.method === "GET" && call.path === `/members/${camille.id}/loans`,
+      ),
+    "l'appel GET /members/:memberID/loans",
+  );
+
+  await waitFor(
+    () => app.$("#member-loans-dialog").open,
+    "le dialogue des emprunts s'ouvre",
+  );
+
+  const emptyMessage = app.$("#member-loans-empty");
+  const rows = app.$$("#member-loans-list .row");
+
+  assertEqual(rows.length, 0);
+  assertTrue(!emptyMessage.hidden, "le message s'affiche lorsque la liste est vide");
+});

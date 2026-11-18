@@ -234,6 +234,8 @@ async function loadMembers() {
 function memberRow(member) {
   const actions = el("div", { class: "actions" });
 
+  actions.append(button("Emprunts", () => openMemberLoansDialog(member), "primary"));
+
   actions.append(button("Modifier", () => openMemberDialog(member), "primary"));
 
   actions.append(button("Supprimer", () => openDeleteDialog({
@@ -305,6 +307,51 @@ bindSubmit(memberDialog, memberForm, async (data) => {
   }
 });
 
+// --- Emprunts d'un·e adhérent·e -----------------------------------------------------------
+
+function loanStatus(loan) {
+
+ return loan.returnedAt 
+  ? el("span", { class: "badge ok" }, "Rendu")
+  : (new Date(loan.dueAt) > new Date())
+    ? el("span", { class: "badge busy" }, "En cours")
+    : el("span", { class: "badge late" }, "En retard")
+
+}
+
+function loanRow(loan, gameTitle) {
+  return el(
+    "li",
+    { class: new Date(loan.dueAt) > new Date() ? "row" : "row late" },
+    el(
+      "div",
+      { class: "row-main" },
+      el("p", {}, el("strong", {}, gameTitle)),
+      el(
+        "p",
+        { class: "meta" },
+        `Emprunté le ${formatDate(loan.borrowedAt)} · À rendre le ${formatDate(loan.dueAt)}`,
+      ),
+    ),
+    loanStatus(loan),
+  );
+}
+
+const memberLoansDialog = $("#member-loans-dialog");
+
+async function openMemberLoansDialog(member) {
+ await run(async () => {
+    const [loans, games] = await Promise.all([api.listMemberLoans(member.id), api.listGames()]);
+    const gameTitles = new Map(games.map((game) => [game.id, game.title]));
+
+    $("#member-loans-dialog-title").textContent = `Emprunts de l'adhérent·e « ${member.name} »`;
+    
+    $("#member-loans-empty").hidden = loans.length > 0;
+    $("#member-loans-list").replaceChildren(...loans.map((loan) => loanRow(loan, gameTitles.get(loan.gameID))));
+
+    memberLoansDialog.showModal();
+  });
+}
 // --- Suppression -----------------------------------------------------------
 const deleteDialog = $("#delete-dialog");
 const deleteForm = $("#delete-form");
