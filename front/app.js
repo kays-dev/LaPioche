@@ -114,6 +114,7 @@ function addGameFilters() {
     q: inputs.q.value.trim(),
     players: positiveIntValue(inputs.players.value),
     maxDuration: positiveIntValue(inputs.maxDuration.value),
+    available: inputs.available.checked ? true : undefined
   };
 }
 
@@ -136,6 +137,7 @@ gameFilters.addEventListener("submit", (event) => {
   event.preventDefault();
   run(loadGames);
 });
+gameFilters.elements.available.addEventListener("change", () => run(loadGames));
 
 $("#reset-filters").addEventListener("click", () => {
   gameFilters.reset();
