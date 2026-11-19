@@ -3,6 +3,9 @@ import Testing
 import VaporTesting
 
 
+
+let camille = Member(name: "Camille", email: "camille@example.com")
+
 func createGameToManage(
     _ app: Application,
     title: String = "Catan",

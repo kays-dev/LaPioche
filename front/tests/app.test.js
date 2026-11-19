@@ -194,6 +194,82 @@ test("feat-03 : returning a game changes game availability with a confirmation m
   assertTrue(!buttons.includes("Rendre"), "Rendre n'est plus proposé");
 });
 
+test("feat-06 : searching games with parameters gets a filtered list of games", async () => {
+  const app = await mountApp({ "GET /games": [catan, dixit] });
+  await waitFor(() => app.$$("#games-list .card").length === 2);
+
+  const form = app.$("#game-filters");
+  form.elements.q.value = "  cat ";
+  form.elements.players.value = "4";
+  form.elements.maxDuration.value = "120";
+  form.requestSubmit();
+
+  await waitFor(
+    () => app.calls.some((call) => call.path === "/games" && call.search === "?q=cat&players=4&maxDuration=120"),
+    "l'appel GET /games avec les trois paramètres",
+  );
+});
+
+test("feat-06 : invalid or empty filters are never sent", async () => {
+  const app = await mountApp({ "GET /games": [catan] });
+  await waitFor(() => app.$$("#games-list .card").length === 1);
+
+  const form = app.$("#game-filters");
+  form.elements.q.value = "cat";
+  form.elements.players.value = "0";
+  form.elements.maxDuration.value = "2.5";
+  form.requestSubmit();
+
+  await waitFor(() => app.calls.length >= 2, "la recherche est envoyée");
+  assertEqual(app.calls.at(-1).search, "?q=cat");
+});
+
+test("feat-06 : a search without result shows its own message", async () => {
+  const app = await mountApp({
+    "GET /games": ({ search }) => (search ? [] : [catan]),
+  });
+  await waitFor(() => app.$$("#games-list .card").length === 1);
+
+  const form = app.$("#game-filters");
+  form.elements.q.value = "z";
+  form.requestSubmit();
+
+  await waitFor(() => !app.$("#games-empty").hidden, "le message s'affiche");
+  assertEqual(app.$$("#games-list .card").length, 0);
+  assertIncludes(app.$("#games-empty").textContent, "Aucun jeu ne correspond");
+
+  app.$("#reset-filters").click();  
+  await waitFor(() => app.$$("#games-list .card").length === 1, "la liste complète est chargée");
+  assertTrue(app.$("#games-empty").hidden, "le message de la recherche disparaît");
+});
+
+test("feat-07 : checking available only sends available=true and updates the list", async () => {
+  const app = await mountApp({
+    "GET /games": ({ search }) => (search.includes("available=true") ? [catan] : [catan, dixit]),
+  });
+  await waitFor(() => app.$$("#games-list .card").length === 2);
+
+  app.$("#game-filters").elements.available.click();
+
+  await waitFor(() => app.calls.at(-1).search === "?available=true", "le paramètre available est envoyé");
+  await waitFor(() => app.$$("#games-list .card").length === 1, "le jeu disponible reste dans la liste");
+  assertTrue(cardOf(app, "Dixit") === undefined, "le jeu emprunté est filtré");
+});
+
+test("feat-07 : available combines with the search", async () => {
+  const app = await mountApp({ "GET /games": [catan, dixit] });
+  await waitFor(() => app.$$("#games-list .card").length === 2);
+
+  const inputs = app.$("#game-filters").elements;
+  inputs.q.value = "cat";
+  inputs.players.value = "4";
+  inputs.available.click();
+
+  await waitFor(
+    () => app.calls.at(-1).search === "?q=cat&players=4&available=true",
+    "available est envoyé avec les autres filtres",
+  );
+});
 // --- Emprunts
 
 test("borrowing a game sends the game and the chosen member", async () => {
