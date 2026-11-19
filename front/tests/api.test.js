@@ -84,6 +84,22 @@ test("feat-05 : listOverdueLoans calls GET /loans/overdue", async () => {
 
   assertEqual(`${calls[0].method} ${calls[0].path}`, "GET /loans/overdue");
 });
+
+test("feat-06 : listGames calls GET /games?q=c&players=4&maxDuration=30", async () => {
+  const { fetch, calls } = fakeApi({ "GET /games?q=c&players=4&maxDuration=30" : []});
+  await withFakeFetch(fetch, () => api.listGames({q: "c", players: 4, maxDuration: 30}));
+
+  assertEqual(`${calls[0].method} ${calls[0].path}`, "GET /games");
+  assertEqual(calls[0].search, "?q=c&players=4&maxDuration=30")
+});
+
+test("feat-06 : listGames skips empty and missing filters", async () => {
+  const { fetch, calls } = fakeApi({ "GET /games": [] });
+
+  await withFakeFetch(fetch, () => api.listGames({ q: "", players: undefined, maxDuration: null }));
+  
+  assertEqual(calls[0].search, "");
+});
 // --- erreurs
 
 // Attend qu'une promesse échoue et renvoie l'erreur (échoue si elle réussit).
