@@ -3,6 +3,9 @@ import Testing
 import VaporTesting
 
 
+
+let camille = Member(name: "Camille", email: "camille@example.com")
+
 func createGameToManage(
     _ app: Application,
     title: String = "Catan",
@@ -51,19 +54,4 @@ func borrow(
     
     try await loan.save(on: app.db)
     return loan
-}
-
-
-func gameExamples(_ app: Application) async throws {
-    for game in [
-        Game(title: "Catan", minPlayers: 3, maxPlayers: 4, durationMinutes: 90),
-        Game(title: "Dixit", minPlayers: 3, maxPlayers: 6, durationMinutes: 30),
-        Game(title: "Uno", minPlayers: 2, maxPlayers: 10, durationMinutes: 20),
-    ] {
-        try await game.save(on: app.db)
-    }
-}
-
-func titles(of res: TestingHTTPResponse) throws -> Set<String> {
-    Set(try res.content.decode([GameDTO].self).map(\.title))
 }

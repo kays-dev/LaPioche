@@ -242,6 +242,34 @@ test("feat-06 : a search without result shows its own message", async () => {
   await waitFor(() => app.$$("#games-list .card").length === 1, "la liste complète est chargée");
   assertTrue(app.$("#games-empty").hidden, "le message de la recherche disparaît");
 });
+
+test("feat-07 : checking available only sends available=true and updates the list", async () => {
+  const app = await mountApp({
+    "GET /games": ({ search }) => (search.includes("available=true") ? [catan] : [catan, dixit]),
+  });
+  await waitFor(() => app.$$("#games-list .card").length === 2);
+
+  app.$("#game-filters").elements.available.click();
+
+  await waitFor(() => app.calls.at(-1).search === "?available=true", "le paramètre available est envoyé");
+  await waitFor(() => app.$$("#games-list .card").length === 1, "le jeu disponible reste dans la liste");
+  assertTrue(cardOf(app, "Dixit") === undefined, "le jeu emprunté est filtré");
+});
+
+test("feat-07 : available combines with the search", async () => {
+  const app = await mountApp({ "GET /games": [catan, dixit] });
+  await waitFor(() => app.$$("#games-list .card").length === 2);
+
+  const inputs = app.$("#game-filters").elements;
+  inputs.q.value = "cat";
+  inputs.players.value = "4";
+  inputs.available.click();
+
+  await waitFor(
+    () => app.calls.at(-1).search === "?q=cat&players=4&available=true",
+    "available est envoyé avec les autres filtres",
+  );
+});
 // --- Emprunts
 
 test("borrowing a game sends the game and the chosen member", async () => {

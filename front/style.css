@@ -88,8 +88,19 @@ input, select {
 }
 label { display: block; font-size: 0.9rem; color: var(--muted); }
 label input, label select { margin-top: 2px; color: var(--text); }
-label.check { display: flex; align-items: center; gap: 8px; color: var(--text); align-self: end; padding-bottom: 6px; }
-label.check input { width: auto; margin: 0; }
+label.check {   
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch; 
+}
+label.check input {   
+  width: 1.6rem;
+  height: 1.6rem; 
+  margin: 0; 
+  accent-color: var(--accent);
+  cursor: pointer;
+}
 
 .filters {
   display: grid;

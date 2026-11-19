@@ -5,6 +5,26 @@ import VaporTesting
 @Suite("Feat-06: Search a Game")
 struct Feat06GameSearchTests {
     
+    private func gameExamples(_ app: Application) async throws {
+        let catan = Game(title: "Catan", minPlayers: 3, maxPlayers: 4, durationMinutes: 90)
+        let dixit = Game(title: "Dixit", minPlayers: 3, maxPlayers: 6, durationMinutes: 30)
+        let uno = Game(title: "Uno", minPlayers: 2, maxPlayers: 10, durationMinutes: 20)
+        
+        let sampleGames = [
+            catan,
+            dixit,
+            uno,
+        ]
+        
+        for game in sampleGames {
+            try await game.save(on: app.db)
+        }
+    }
+    
+    private func titles(of res: TestingHTTPResponse) throws -> Set<String> {
+        Set(try res.content.decode([GameDTO].self).map(\.title))
+    }
+    
     @Test("Successful game search with all parameters returns 200 OK response")
     func testSearchGameWithAllParametersReturnsOK() async throws {
         try await withApp(configure: configure) { app in
@@ -21,6 +41,8 @@ struct Feat06GameSearchTests {
                 
                 let gameTitles = try titles(of: res)
                 #expect(gameTitles.contains("Dixit"))
+                #expect(!gameTitles.contains("Catan"))
+                #expect(!gameTitles.contains("Uno"))
                 
             })
         }
@@ -39,7 +61,9 @@ struct Feat06GameSearchTests {
                 #expect(res.status == .ok)
                 
                 let gameTitles = try titles(of: res)
+                #expect(!gameTitles.contains("Dixit"))
                 #expect(gameTitles.contains("Catan"))
+                #expect(!gameTitles.contains("Uno"))
                 
             })
         }
@@ -58,10 +82,10 @@ struct Feat06GameSearchTests {
                 #expect(res.status == .ok)
                 
                 let gameTitles = try titles(of: res)
-                #expect(gameTitles.contains("Catan"))
                 #expect(gameTitles.contains("Dixit"))
+                #expect(gameTitles.contains("Catan"))
                 #expect(gameTitles.contains("Uno"))
-                
+
             })
         }
     }
@@ -80,6 +104,7 @@ struct Feat06GameSearchTests {
                 
                 let gameTitles = try titles(of: res)
                 #expect(gameTitles.contains("Dixit"))
+                #expect(!gameTitles.contains("Catan"))
                 #expect(gameTitles.contains("Uno"))
                 
             })
@@ -97,8 +122,8 @@ struct Feat06GameSearchTests {
                 #expect(res.status == .ok)
                 
                 let gameTitles = try titles(of: res)
-                #expect(gameTitles.contains("Catan"))
                 #expect(gameTitles.contains("Dixit"))
+                #expect(gameTitles.contains("Catan"))
                 #expect(gameTitles.contains("Uno"))
                 
             })
