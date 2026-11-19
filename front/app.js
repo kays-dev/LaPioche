@@ -101,11 +101,46 @@ window.addEventListener("hashchange", refresh);
 
 // --- Jeux ------------------------------------------------------------------
 
+const gameFilters = $("#game-filters")
+
+const positiveIntValue = (value) => {
+  const number = Number(value);
+  return Number.isInteger(number) && number > 0 ? number : undefined;
+};
+
+function addGameFilters() {
+  const inputs = gameFilters.elements;
+  return {
+    q: inputs.q.value.trim(),
+    players: positiveIntValue(inputs.players.value),
+    maxDuration: positiveIntValue(inputs.maxDuration.value),
+  };
+}
+
+const emptyMessages = {
+  library: $("#games-empty").textContent,            
+  search: "Aucun jeu ne correspond à votre recherche.",
+};
+
 async function loadGames() {
-  const games = await api.listGames();
+  const filters = addGameFilters();
+  const games = await api.listGames(filters);
+  const searching = Object.values(filters).some((value) => value != null && value !== "");
+
+  $("#games-empty").textContent = searching ? emptyMessages.search : emptyMessages.library;
   $("#games-empty").hidden = games.length > 0;
   $("#games-list").replaceChildren(...games.map(gameCard));
 }
+
+gameFilters.addEventListener("submit", (event) => {
+  event.preventDefault();
+  run(loadGames);
+});
+
+$("#reset-filters").addEventListener("click", () => {
+  gameFilters.reset();
+  run(loadGames);
+});
 
 function gameCard(game) {
   const players =
